@@ -6,14 +6,15 @@
 
 // FlyGraph class/object
 // Parameters: game object, x coord, y coord
-FlyGraph = function(game, graphParameters) {
+FlyGraph = function(game, graphParameters, text) {
 	this.game = game;
     Phaser.Group.call(this, game);
-	
+
 	this._graphParameters = graphParameters;
 	this._paper;
 	this._aLayers = [];
-	
+	this._text = text;
+
 	this._init();
 };
 
@@ -24,16 +25,16 @@ FlyGraph.prototype.constructor = FlyGraph;
 FlyGraph.prototype._init = function() {
 	// Size (x- and y-dimensions) of graph "paper"
 	var aPaperSize = this._graphParameters.paper.size;
-	
+
 	// Margins between graphing area and surrounding graph 'paper'
 	this._margins = this._graphParameters.margins;
-	
+
 	// Size (x- and y-dimensions) of graph area
 	this._aGraphSize = [aPaperSize[0] - (this._margins.left + this._margins.right), aPaperSize[1] - (this._margins.top + this._margins.bottom)];
-	
+
 	// Coordinates (pixels) of graph origin point
 	this._aOrigin = [this._margins.left, aPaperSize[1] - this._margins.bottom];
-	
+
 	this._initPaper();
 	this._initLayers();
 };
@@ -53,14 +54,14 @@ FlyGraph.prototype.resetGraph = function(){
 // Draw the FlyGraph
 /*FlyGraph.prototype.update = function() {
     this.clear();
-	
+
 	this.beginFill(0x996633);
 	this.arc(0, 0, 100, Math.PI/2, 3*Math.PI/2);
 	this.endFill();
 };*/
 
 FlyGraph.prototype.debug = function(){
-    console.log(this);   
+    console.log(this);
 };
 
 FlyGraph.prototype.getTickScreenInterval = function(sLayer, sAxis){
@@ -97,12 +98,14 @@ FlyGraph.prototype._initLayers = function() {
 	var layersParameters = this._graphParameters.layers;
 	var axesParameters = this._graphParameters.axes;
 	var dataMarkerParameters = this._graphParameters.dataMarkers;
-	
+
 	var layerTitle;
 	for (layerTitle in layersParameters) {
 		var thisLayersParams = layersParameters[layerTitle];
 		thisLayersParams.aOrigin = this._aOrigin;
-		var graphLayer = new GraphLayer(this.game, this, thisLayersParams, layerTitle, axesParameters, dataMarkerParameters);
+
+
+		var graphLayer = new GraphLayer(this.game, this, thisLayersParams, layerTitle, axesParameters, dataMarkerParameters, this._text.axes);
 		this.add(graphLayer); // Add to Graph group
 		graphLayer.x = this._margins.left;
 		graphLayer.y = this._margins.top;
@@ -151,11 +154,11 @@ FlyGraph.prototype.getLayer = function(sLayerTitle) {
 
 FlyGraph.prototype._initPaper = function() {
 	var paperParameters = this._graphParameters.paper;
-	
+
 	// Create graph paper using shared class GraphPaper
     this._paper = new GraphPaper(this.game, paperParameters);
     //this._paper = new GraphPaper(this.game, this, paperParameters);
-	
+
 	this.add(this._paper); // Add to Graph group
 };
 
@@ -178,17 +181,17 @@ FlyGraph.prototype.setPaperColor = function(newPaperColor) {
 FlyGraph.prototype.setPaperSize = function(aNewPaperSize) {
 	// Size (x- and y-dimensions) of graph area
 	this._aGraphSize = [aNewPaperSize[0] - (this._margins.left + this._margins.right), aNewPaperSize[1] - (this._margins.top + this._margins.bottom)];
-	
+
 	// Coordinates (pixels) of graph origin point
 	this._aOrigin = [this._margins.left, aNewPaperSize[1] - this._margins.bottom];
-	
+
 	// Resize each of the Graph Data Layers
 	var layerNum;
 	for (layerNum in this._aLayers) {
 		var thisLayer = this._aLayers[layerNum];
 		thisLayer.setSize(this._aGraphSize);
 	}
-	
+
 	this._paper.setSize(aNewPaperSize);
 };
 
@@ -204,19 +207,19 @@ FlyGraph.prototype.getPaperSize = function(){
 FlyGraph.prototype._drawAxes = function() {
 	this._axes = this.game.add.graphics(this._aOrigin[0], this._aOrigin[1]);
 	this.add(this._axes);
-	
+
 	var axisColor = this._graphParameters.axes.color;
 	this._axes.lineStyle(1, axisColor, 1);
 	//this._axes.lineStyle(1, 0x000000, 1);
-	
+
 	// Draw x-axis
 	this._axes.moveTo(0, 0);
 	this._axes.lineTo(this._aGraphSize[0], 0);
-	
+
 	// Draw y-axis
 	this._axes.moveTo(0, 0);
 	this._axes.lineTo(0, -1 * this._aGraphSize[1]);
-	
+
 	// X-axis title
 	//var style = { font: "14px Arial", fill: "#000000", align: "center" };
 	////var style = { font: "14px Arial", fill: "#000000", align: "center", backgroundColor: "#cccccc" };
@@ -224,7 +227,7 @@ FlyGraph.prototype._drawAxes = function() {
 	//var xAxisTitle = this.game.add.text(xAxisTitleLoc[0], xAxisTitleLoc[1], "Year", style);
 	//xAxisTitle.anchor.setTo(0.5, 1);
 	//this.add(xAxisTitle);
-	
+
 	// X-axis value labels
 	/*style = { font: "12px Arial", fill: "#000000", align: "center" };
 	//style = { font: "12px Arial", fill: "#000000", align: "center", backgroundColor: "#aaaaaa" };
@@ -238,7 +241,7 @@ FlyGraph.prototype._drawAxes = function() {
 		valueLabel.anchor.setTo(0.5, 0);
 		this.add(valueLabel);
 	}
-	
+
 	// Y-axis value labels
 	style = { font: "14px Arial", fill: "#cc6666", align: "right" };
 	//style = { font: "14px Arial", fill: "#cc6666", align: "right", backgroundColor: "#ffcccc" };
@@ -252,7 +255,7 @@ FlyGraph.prototype._drawAxes = function() {
 		valueLabel.anchor.setTo(1, 0.5);
 		this.add(valueLabel);
 	}
-	
+
 	style = { font: "14px Arial", fill: "#6666cc", align: "right" };
 	//style = { font: "14px Arial", fill: "#6666cc", align: "right", backgroundColor: "#ccccff" };
 	yAxisValues = ["Dry", "Normal", "Wet"];
@@ -263,5 +266,5 @@ FlyGraph.prototype._drawAxes = function() {
 		valueLabel.anchor.setTo(1, 0.5);
 		this.add(valueLabel);
 	}*/
-	
+
 };
