@@ -55,5 +55,5 @@ var buttonTxtStyle = { font: "25px Arial", fill: "#FFFFFF", align: "center" };
 
 DialogBox.prototype._closeDialog = function(pointer) {
 	this.visible = false;
-	//this.game.closeDialog();
+	this.game.closeDialog();
 };
